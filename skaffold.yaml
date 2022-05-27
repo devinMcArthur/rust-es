@@ -1,0 +1,42 @@
+apiVersion: skaffold/v2beta26
+kind: Config
+build:
+  local:
+    push: false # Setting false will not push the image to remote repository
+  tagPolicy:
+    gitCommit: {}
+  artifacts:
+    - image: itsdevin/rust-es-server
+      context: server
+      docker:
+        dockerfile: Dockerfile
+      # Must be using nodemon
+      sync:
+        manual:
+          - src: "**/*.rs"
+            dest: .
+# Automatically apply config files, remove them when stopped
+deploy:
+  kubeContext: minikube
+  kubectl:
+    manifests:
+      - k8s/dev/mongo.yaml
+      - k8s/dev/eventstore.yaml
+      - k8s/dev/server.yaml
+portForward:
+  - resourceType: Service
+    resourceName: server-cluster-ip-service
+    namespace: default
+    port: 8080
+  - resourceType: Service
+    resourceName: mongodb
+    namespace: default
+    port: 27017
+  - resourceType: Service
+    resourceName: eventstore
+    namespace: default
+    port: 2113
+  - resourceType: Service
+    resourceName: eventstore
+    namespace: default
+    port: 1113
